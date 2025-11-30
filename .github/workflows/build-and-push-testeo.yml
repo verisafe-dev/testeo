@@ -1,0 +1,38 @@
+name: build-and-push-testeo
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "pom.xml"
+      - "src/**"
+      - "Dockerfile"
+      - ".github/workflows/build-and-push-testeo.yml"
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        run: |
+          IMAGE_NAME=ghcr.io/verisafe-dev/testeo
+          IMAGE_TAG=${{ github.sha }}
+
+          docker build -t $IMAGE_NAME:$IMAGE_TAG -t $IMAGE_NAME:latest .
+
+          docker push $IMAGE_NAME:$IMAGE_TAG
+          docker push $IMAGE_NAME:latest
